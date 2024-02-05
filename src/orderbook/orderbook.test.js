@@ -80,9 +80,8 @@ describe('OrderBook', () => {
     expect(ob._getSellOrders().length).toBe(1);
   });
 
-  it('Should match both orders and remove from arrays', () => {
+  it('Should match both orders and remove from order arrays', () => {
 
-    // Prepare ob state
     let sellOrder = {
       type: 'SELL',
       amount: 2,
@@ -91,7 +90,6 @@ describe('OrderBook', () => {
 
     ob._addOrder(sellOrder);
     expect(ob._getSellOrders().length).toBe(1);
-    console.log('ob state: ', ob);
     
     mockOrder = {
       id: 'mockId',
@@ -107,7 +105,8 @@ describe('OrderBook', () => {
 
     expect(ob._getBuyOrders().length).toBe(0);
     expect(ob._getSellOrders().length).toBe(0);
-
+    expect(ob._getFullfilledOrders().length).toBe(2);
+    
   });
 
   });

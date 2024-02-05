@@ -53,7 +53,7 @@ class OrderBook {
       [OrderType.BUY]: new Array(),
       [OrderType.SELL]: new Array(),
     }
-    this.fullfilledOrders = []; // @@ TODO, Do we need to keep record of fulfilled orders ?;
+    this.fullfilledOrders = new Array(); // @@ TODO, Do we need to keep record of fulfilled orders ?;
   }
 
   getAsset() {
@@ -66,6 +66,10 @@ class OrderBook {
 
   _getSellOrders() {
     return this.orders[OrderType.SELL];
+  };
+
+  _getFullfilledOrders() {
+    return this.fullfilledOrders;
   };
 
   _addOrder(orderData) {
@@ -119,7 +123,8 @@ class OrderBook {
         oppositeOrder.amount -= tradeQuantity;
 
         if (oppositeOrder.amount === 0) {
-            toMatchOrders.splice(i, 1);
+            const [ _matchedOrder ] = toMatchOrders.splice(i, 1);
+            this.fullfilledOrders.push(_matchedOrder);
             i -= 1;
         }
 
@@ -135,6 +140,7 @@ class OrderBook {
         if (orderData.amount === 0) {
             // Remove fulfilled order from array;
             const [ _fullfilledOrder ] = this.orders[type].splice(i, 1);
+            this.fullfilledOrders.push(_fullfilledOrder);
             i -= 1;
             break;
         }
