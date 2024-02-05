@@ -79,4 +79,24 @@ describe('OrderBook', () => {
     expect(ob.asset).toBe('usdt');
     expect(ob._getSellOrders().length).toBe(1);
   });
+
+  it('Should match both orders and remove from arrays', () => {
+    let sellOrder = {
+      type: 'SELL',
+      amount: 2,
+      price: 2,
+    };
+
+    let buyOrder = {
+      type: 'BUY',
+      amount: 2,
+      price: 2,
+    };
+
+    ob.addOrder(sellOrder);
+    ob.addOrder(buyOrder);
+
+    ob.matchOrders();
+  });
+
   });

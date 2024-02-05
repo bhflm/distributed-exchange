@@ -10,6 +10,16 @@ const { createEnum } = require("../common");
  */
 const OrderType = createEnum(['SELL', 'BUY']);
 
+
+// Returns against order type to match for
+const getOrderTypeToMatch = (orderType) => {
+  switch(orderType) {
+    case OrderType.SELL:
+      return OrderType.BUY;
+    case OrderType.BUY:
+      return OrderType.SELL;  
+  };
+};
 /**
  * Order is meant for each instance of a new order
  */
@@ -23,7 +33,7 @@ class Order {
       throw new Error(errorMessages.negativeAmountPriceErrorMessage);
     }
 
-    this.id = Math.random(); // uid ?
+    this.id = Math.random().toString(36).substring(7);
 
 
     this.type = type; // this should be orderType
@@ -39,8 +49,10 @@ class OrderBook {
   
   constructor (asset){ 
     this.asset = asset;
-    this.buyOrders = new Array();
-    this.sellOrders = new Array();
+    this.orders = {
+      [OrderType.BUY]: new Array(),
+      [OrderType.SELL]: new Array(),
+    }
   }
 
   getAsset() {
@@ -48,11 +60,11 @@ class OrderBook {
   }
 
   _getBuyOrders() {
-    return this.buyOrders;
+    return this.orders[OrderType.BUY];
   };
 
   _getSellOrders() {
-    return this.sellOrders;
+    return this.orders[OrderType.SELL];
   };
 
   addOrder(orderData) {
@@ -61,19 +73,41 @@ class OrderBook {
 
     switch(newOrder.type) {
       case OrderType.SELL: {
-        this.sellOrders.push(newOrder)
+        const sellOrders = this.orders[OrderType.SELL];
+        sellOrders.push(newOrder);
+        // @@ TODO, Sync orderbook with other peers
         break;
       };
       case OrderType.BUY: {
-        this.buyOrders.push(newOrder);
+        const buyOrders = this.orders[OrderType.BUY];
+        buyOrders.push(newOrder);
+        // @@ TODO, Sync orderbook with other peers
         break;
       }
     };
     // do stuff;
+
+
+    // @@ TODO, Sync orderbook with other peers
     return;
   }
 
-  matchOrder(order){
+  matchOrders(order){
+
+    console.log('MATCH ORDERS: ', order);
+
+    const oppositeOrderType = getOrderTypeToMatch(order.type);
+
+    console.log('ORDER TO MATCH', oppositeOrderType);
+    const toMatchOrders = this.orders[oppositeOrderType];
+
+    console.log('OPPOSITE ORDERS', toMatchOrders);
+
+
+    // Lock ??? 
+
+
+
     // @@TODO;
     return null;
   };
