@@ -1,3 +1,4 @@
+const errorMessages = require('./errors');
 const { createEnum } = require("../common");
 
 /**
@@ -15,11 +16,11 @@ const OrderType = createEnum(['SELL', 'BUY']);
 class Order { 
   constructor(type, amount, price) {
     if (OrderType[type] === undefined) {
-      throw new Error('Need a valid Order Type');
+      throw new Error(errorMessages.unknownOrderErrorMesage);
     };
 
     if (amount <= 0 || price <= 0) {
-      throw new Error('Amount & Price needs to be positive');
+      throw new Error(errorMessages.negativeAmountPriceErrorMessage);
     }
 
     this.id = Math.random(); // uid ?
@@ -55,7 +56,6 @@ class OrderBook {
   };
 
   addOrder(orderData) {
-    console.log('adding order: ', orderData);
     const { type, amount, price } = orderData;
     const newOrder = new Order(type, amount, price);
 
@@ -69,8 +69,6 @@ class OrderBook {
         break;
       }
     };
-
-    console.log('Added Order');
     // do stuff;
     return;
   }

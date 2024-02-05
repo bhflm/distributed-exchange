@@ -1,11 +1,10 @@
-const { Order, OrderBook} = require('.');
+const OrderErrors = require('./errors');
+const { OrderBook} = require('.');
 
 describe('OrderBook', () => {
   const ob = new OrderBook('usdt'); 
    
   it('Should not add an unknown order', () => {
-    const unknownOrderErrorMesage = 'Need a valid Order Type';
-
     const mockOrder = {
       type: 'UNKNOWN',
       amount: 1,
@@ -15,7 +14,37 @@ describe('OrderBook', () => {
     try {
       ob.addOrder(mockOrder)
     } catch(err) {
-      expect(err.message).toBe(unknownOrderErrorMesage);
+      expect(err.message).toBe(OrderErrors.unknownOrderErrorMesage);
+    }
+  });
+
+  it('Should not add negative amount order', () => {
+    const mockOrder = {
+      type: 'BUY',
+      amount: -1,
+      price: 1,
+    };
+
+    try {
+      ob.addOrder(mockOrder)
+    } catch(err) {
+      expect(err.message).toBe(OrderErrors.negativeAmountPriceErrorMessage);
+    }
+  });
+  
+  it('Should not add negative price order', () => {
+    const negativeAmountPriceErrorMessage = 'Amount & Price needs to be positive';
+
+    const mockOrder = {
+      type: 'SELL',
+      amount: 1,
+      price: -1,
+    };
+
+    try {
+      ob.addOrder(mockOrder)
+    } catch(err) {
+      expect(err.message).toBe(OrderErrors.negativeAmountPriceErrorMessage);
     }
   });
 
