@@ -2,10 +2,18 @@ const OrderErrors = require('./errors');
 const { OrderBook} = require('.');
 
 describe('OrderBook', () => {
-  const ob = new OrderBook('usdt'); 
-   
+  
+  let ob = new OrderBook('usdt'); 
+  let mockOrder;   
+
+  beforeEach(() => {
+    // Reset ob for each isolated test;
+    ob = new OrderBook('usdt');
+  });
+
+
   it('Should not add an unknown order', () => {
-    const mockOrder = {
+    mockOrder = {
       type: 'UNKNOWN',
       amount: 1,
       price: 1,
@@ -19,7 +27,7 @@ describe('OrderBook', () => {
   });
 
   it('Should not add negative amount order', () => {
-    const mockOrder = {
+    mockOrder = {
       type: 'BUY',
       amount: -1,
       price: 1,
@@ -35,7 +43,7 @@ describe('OrderBook', () => {
   it('Should not add negative price order', () => {
     const negativeAmountPriceErrorMessage = 'Amount & Price needs to be positive';
 
-    const mockOrder = {
+    mockOrder = {
       type: 'SELL',
       amount: 1,
       price: -1,
@@ -49,15 +57,26 @@ describe('OrderBook', () => {
   });
 
   it('Should add a new order to buy orders', () => {
-      const mockOrder = {
-        type: 'BUY',
-        amount: 1,
-        price: 1,
-      };
-      ob.addOrder(mockOrder)
+    mockOrder = {
+      type: 'BUY',
+      amount: 1,
+      price: 1,
+    };
+    ob.addOrder(mockOrder)
 
-      expect(ob.asset).toBe('usdt');
-      expect(ob._getBuyOrders().length).toBe(1);
-    });
-  
-});
+    expect(ob.asset).toBe('usdt');
+    expect(ob._getBuyOrders().length).toBe(1);
+  });
+
+  it('Should add sell order', () => {
+    mockOrder = {
+      type: 'SELL',
+      amount: 2,
+      price: 2,
+    };
+    ob.addOrder(mockOrder)
+
+    expect(ob.asset).toBe('usdt');
+    expect(ob._getSellOrders().length).toBe(1);
+  });
+  });
