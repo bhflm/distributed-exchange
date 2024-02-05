@@ -1,5 +1,5 @@
 class OrderBook {
-  orders;
+  
   constructor (){ 
     this.orders = new Array();
   }
@@ -13,3 +13,7 @@ class OrderBook {
   }
   
 };
+
+module.exports = {
+  OrderBook,
+}
