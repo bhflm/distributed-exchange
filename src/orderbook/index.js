@@ -95,31 +95,32 @@ class OrderBook {
   }
 
   _matchOrders(order){
-    console.log('MATCH ORDERS: ', order);
     const { type } = order;
 
-    let orderData = { ...order };
+    let currentOrder = { ...order };
+    
     const oppositeOrderType = getOrderTypeToMatch(type);
     const toMatchOrders = this.orders[oppositeOrderType];
-
-    console.log('OPPOSITE ORDERS', toMatchOrders);
 
     let matchingOrders = new Array();
 
     // Takes the current order and tries to match it with equal order prices
     for (let i = 0; i < toMatchOrders.length; i ++) {
+
+
       const oppositeOrder = toMatchOrders[i];
 
-      // WE found a matching order price, so we take the min quantity offered
+      // WE found a matching order price (equal or lower), so we take the min quantity offered
       // ie: we make a trade 
-      if (orderData.price === oppositeOrder.price) {
 
-        console.log('EQUAL ORDERS', orderData, oppositeOrder);
+      // This is for buying;
+      if (oppositeOrder.price <= currentOrder.price) {
+        console.log('FOUND MATCH: ', currentOrder, oppositeOrder);
 
-        const tradeQuantity = Math.min(orderData.amount, oppositeOrder.amount);
+        const tradeQuantity = Math.min(currentOrder.amount, oppositeOrder.amount);
         const tradePrice = oppositeOrder.price;
 
-        orderData.amount -= tradeQuantity;
+        currentOrder.amount -= tradeQuantity;
         oppositeOrder.amount -= tradeQuantity;
 
         if (oppositeOrder.amount === 0) {
@@ -130,15 +131,14 @@ class OrderBook {
 
         matchingOrders.push({
             type,
-            pkId: orderData.id,
+            pkId: currentOrder.id,
             skId: oppositeOrder.id,
             quantity: tradeQuantity,
             price: tradePrice,
         });
 
         // Order is fulfilled, we remove it from array too
-        if (orderData.amount === 0) {
-            // Remove fulfilled order from array;
+        if (currentOrder.amount === 0) {
             const [ _fullfilledOrder ] = this.orders[type].splice(i, 1);
             this.fullfilledOrders.push(_fullfilledOrder);
             i -= 1;
@@ -146,11 +146,11 @@ class OrderBook {
         }
       }
     }
-  };
 
-  getOrder(order) {
-    return null;
-  }
+
+
+
+  };
   
 };
 
