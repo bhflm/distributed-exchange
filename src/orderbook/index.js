@@ -98,11 +98,9 @@ class OrderBook {
     const { type } = order;
 
     let currentOrder = { ...order };
-    
+
     const oppositeOrderType = getOrderTypeToMatch(type);
     const toMatchOrders = this.orders[oppositeOrderType];
-
-    let matchingOrders = new Array();
 
     // Takes the current order and tries to match it with equal order prices
     for (let i = 0; i < toMatchOrders.length; i ++) {
@@ -110,32 +108,28 @@ class OrderBook {
 
       const oppositeOrder = toMatchOrders[i];
 
+
       // WE found a matching order price (equal or lower), so we take the min quantity offered
       // ie: we make a trade 
 
-      // This is for buying;
+      // This is for buying; // whenever buying I'm trying to buy at the same or lower price
+      // For selling ,I'm trying to sell at the same, or higher price, for maximize profit
       if (oppositeOrder.price <= currentOrder.price) {
         console.log('FOUND MATCH: ', currentOrder, oppositeOrder);
 
         const tradeQuantity = Math.min(currentOrder.amount, oppositeOrder.amount);
-        const tradePrice = oppositeOrder.price;
+        // const tradePrice = oppositeOrder.price;
 
         currentOrder.amount -= tradeQuantity;
         oppositeOrder.amount -= tradeQuantity;
 
         if (oppositeOrder.amount === 0) {
             const [ _matchedOrder ] = toMatchOrders.splice(i, 1);
+
+            console.log(_matchedOrder);
             this.fullfilledOrders.push(_matchedOrder);
             i -= 1;
         }
-
-        matchingOrders.push({
-            type,
-            pkId: currentOrder.id,
-            skId: oppositeOrder.id,
-            quantity: tradeQuantity,
-            price: tradePrice,
-        });
 
         // Order is fulfilled, we remove it from array too
         if (currentOrder.amount === 0) {
@@ -145,6 +139,7 @@ class OrderBook {
             break;
         }
       }
+
     }
 
 

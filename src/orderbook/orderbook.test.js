@@ -105,7 +105,7 @@ describe('OrderBook', () => {
     
   });
 
-  xit('Should match both orders and remove from order arrays', () => {
+  it('Should match both orders and remove from order arrays', () => {
 
     let sellOrder = {
       type: 'SELL',
@@ -126,8 +126,6 @@ describe('OrderBook', () => {
     ob._addOrder(mockOrder);
     ob._matchOrders(mockOrder);
 
-    console.log('ob state post: ', ob);
-
     expect(ob._getBuyOrders().length).toBe(0);
     expect(ob._getSellOrders().length).toBe(0);
     expect(ob._getFullfilledOrders().length).toBe(2);
@@ -135,42 +133,38 @@ describe('OrderBook', () => {
   });
 
 
-  // it('Should match one order at lower price', () => {
+  it('Should match (two orders), one sell and a half a different order. Fulfilling the current and remaining a partial order on the ob state', () => {
+    let sellOrderA = {
+      type: 'SELL',
+      amount: 1,
+      price: 1,
+    };
 
-  //   let sellOrderA = {
-  //     type: 'SELL',
-  //     amount: 1,
-  //     price: 1,
-  //   };
-
-  //   let sellOrderB = {
-  //     type: 'SELL',
-  //     amount: 2,
-  //     price: 1,
-  //   };
+    let sellOrderB = {
+      type: 'SELL',
+      amount: 2,
+      price: 1,
+    };
 
 
-  //   ob._addOrder(sellOrderA);
-  //   ob._addOrder(sellOrderB);
+    ob._addOrder(sellOrderA);
+    ob._addOrder(sellOrderB);
     
-  //   expect(ob._getSellOrders().length).toBe(2);
+    expect(ob._getSellOrders().length).toBe(2);
     
-  //   mockOrder = {
-  //     id: 'mockId',
-  //     type: 'BUY',
-  //     amount: 2,
-  //     price: 2,
-  //   };
+    mockOrder = {
+      id: 'mockId',
+      type: 'BUY',
+      amount: 2,
+      price: 1,
+    };
 
-  //   ob._addOrder(mockOrder);
-  //   ob._matchOrders(mockOrder);
+    ob._addOrder(mockOrder);
+    ob._matchOrders(mockOrder);
 
-  //   console.log('ob state post: ', ob);
-
-  //   expect(ob._getBuyOrders().length).toBe(0);
-  //   expect(ob._getSellOrders().length).toBe(0);
-  //   expect(ob._getFullfilledOrders().length).toBe(2);
-    
-  // });
+    expect(ob._getBuyOrders().length).toBe(0);
+    expect(ob._getSellOrders().length).toBe(1);
+    expect(ob._getFullfilledOrders().length).toBe(2);
+  });
 
   });
