@@ -1,6 +1,7 @@
 const errorMessages = require('./errors');
 const { createEnum } = require("../common");
 const { Lock } = require('../common/lock');
+const { Logger } = require('../logger');
 
 /**
  * Makes an enum of type
@@ -55,6 +56,7 @@ class OrderBook {
     }
     this.fullfilledOrders = new Array();
     this.lock = new Lock(); // @@ TODO, Do we need to keep record of fulfilled orders ?;
+    this.logger = new Logger('Local Orderbook');
   }
 
   getAsset() {
@@ -74,7 +76,7 @@ class OrderBook {
   };
 
   _addOrder(newOrder) {
-    const { type, amount, price } = newOrder;
+    this.logger.info({ data: newOrder });
 
     switch(newOrder.type) {
       case OrderType.SELL: {
@@ -110,7 +112,6 @@ class OrderBook {
       // This is for buying; // whenever buying I'm trying to buy at the same or lower price
       // For selling ,I'm trying to sell at the same, or higher price, for maximize profit
       if (oppositeOrder.price <= currentOrder.price) {
-        console.log('FOUND MATCH: ', currentOrder, oppositeOrder);
 
         const tradeQuantity = Math.min(currentOrder.amount, oppositeOrder.amount);
         // const tradePrice = oppositeOrder.price;
@@ -120,8 +121,6 @@ class OrderBook {
 
         if (oppositeOrder.amount === 0) {
             const [ _matchedOrder ] = toMatchOrders.splice(i, 1);
-
-            console.log(_matchedOrder);
             this.fullfilledOrders.push(_matchedOrder);
             i -= 1;
         }
@@ -139,12 +138,10 @@ class OrderBook {
       }
 
     }
-
-    // public
-
   };
 
   async submitNewOrder({ type, amount, price }){
+    this.logger.info({ data: 'Submitting new order' });
     // Lock Ob;
     try {
       if (this.lock.isLocked) {
@@ -159,24 +156,35 @@ class OrderBook {
       this._matchOrders(newOrder);
   
     } catch(err) {
-      console.error('Error processing order:', err);
+      logger.error('Error processing order:', err);
     } finally {
       await this.lock.release();
+      this.logger.info({ data: 'Finished submitting new order' });
     }
 
   };
 
 
-  async syncOrderBook(globalOrderbook) {
+  async syncExternalOrderBook({ orders, fullfilledOrders }) {
+    this.logger.info({ data: 'Sync with external orderbook info' });
     await this.lock.acquire();
 
-    const updatedOrders = globalOrderbook.orders;
+    const updatedOrders = orders;
     this.orders = updatedOrders;
 
-    const updatedFulfilled = globalOrderbook.fullfilledOrders;
+    const updatedFulfilled = fullfilledOrders;
     this.fullfilledOrders = updatedFulfilled;
 
     await this.lock.release();
+  };
+
+  async getOrderBook() {
+    this.logger.info({ data: 'Retrieving orderbook info' });
+    return {
+      orders: this.orders,
+      fulfilledOrders: this.fullfilledOrders,
+      asset: this.asset,
+    };
   };
 
 };

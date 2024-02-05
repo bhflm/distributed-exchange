@@ -1,22 +1,23 @@
 const util = require('util');
 
 class Logger {
-  constructor() {
+  constructor(loggerId) {
     this.logger = console;
+    this.loggerId = loggerId;
   };
-
+  
   debug(params) {
     this.logger.debug(util.inspect({params}, { depth: null }));
   };
 
-  info({ key, data }) {
+  info({ data }) {
     const date = (new Date()).toISOString();
-    this.logger.log(`${date} - INFO ${key} ${JSON.stringify(data)}`);
+    this.logger.log(`${this.loggerId} ${date} - INFO ${JSON.stringify(data)}`);
   };
 
   error(errMessage) {
     const date = (new Date()).toISOString();
-    this.logger.error(`${date} - ERROR ${errMessage}`)
+    this.logger.error(`${this.loggerId} ${date} - ERROR ${errMessage}`)
   };
 
 };

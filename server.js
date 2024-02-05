@@ -11,10 +11,6 @@ const config = require('./config');
 const { OrderBook } = require('./src/orderbook');
 const { Logger } = require('./src/logger');
 
-// this is our orderbook instance from each client
-// its in charge to distribute requests and announce new ones
-// client.js just submits requests
-
 const link = new Link({
   grape: 'http://127.0.0.1:30001'
 })
@@ -29,25 +25,36 @@ const port = 1024 + Math.floor(Math.random() * 1000)
 const service = peer.transport('server')
 service.listen(port)
 
-console.log('started service');
+const logger = new Logger('Server');
 
-const logger = new Logger();
 const instanceOrderBook = new OrderBook();
 
-setInterval(() => {
-  // Announce service and synchronize order books with connected clients
+setInterval(async () => {
+  logger.info({ data: 'Announcing to network' });
   link.announce(config._workerName, service.port, {});
-  syncOrderBooks();
-}, 1000);
+  await syncOrderBooks();
+}, 5000);
 
-async function handleRequest({ key, payload, handler }) {
-  logger.info({key: 'handleRequest', payload});
+async function handleRequest(requestData) {
+  logger.info({ data: 'handleRequest' });
+
+  const { key, payload, handler } = requestData;
+
+  try {
+    if (payload.type == 'UPDATE' && payload.localOrderbook) {
+      // Update orderbook instance;
+      const { localOrderbook } = payload;
+      instanceOrderBook.syncExternalOrderBook({ orders: localOrderbook.orders, fullfilledOrders: localOrderbook.fullfilledOrders });
+    }
   
-  // debug things
-  logger.debug(payload);
+    const syncdOrderbookInfo = await instanceOrderBook.getOrderBook();
 
-
-  handler.reply(null, { msg: 'world' });
+    handler.reply(null, { data: syncdOrderbookInfo, status: 'success' });
+  } catch(err) {
+    logger.error(err);
+    logger.debug(err);
+    handler.reply(null, { status: 'error' });
+  }
 };
 
 // Register service to listen to requests
@@ -55,10 +62,8 @@ service.on('request', async (rid, key, payload, handler) => {
   await handleRequest({ key, payload, handler });
 })
 
-function syncOrderBooks() {
+async function syncOrderBooks() {
   // Retrieve the global order book from the server
-  const globalOrderBook = instanceOrderBook.getOrderBook();
-
-  // Iterate through connected clients and synchronize their local order books
-  link.announce('rpc_test', service.port, { orderBook: globalOrderBook });
+  const globalOrderBook = await instanceOrderBook.getOrderBook();
+  link.announce(config._workerName, service.port, { orderBook: globalOrderBook });
 }

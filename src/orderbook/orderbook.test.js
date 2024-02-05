@@ -175,8 +175,6 @@ describe('OrderBook', () => {
 
     await ob.lock.acquire();
 
-    console.log('OB: ', ob);
-
     expect(ob.lock.isLocked).toBe(true);
 
     ob._addOrder(sellOrderA);
