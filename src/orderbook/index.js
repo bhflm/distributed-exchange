@@ -53,6 +53,7 @@ class OrderBook {
       [OrderType.BUY]: new Array(),
       [OrderType.SELL]: new Array(),
     }
+    this.fullfilledOrders = []; // @@ TODO, Do we need to keep record of fulfilled orders ?;
   }
 
   getAsset() {
@@ -67,7 +68,7 @@ class OrderBook {
     return this.orders[OrderType.SELL];
   };
 
-  addOrder(orderData) {
+  _addOrder(orderData) {
     const { type, amount, price } = orderData;
     const newOrder = new Order(type, amount, price);
 
@@ -85,31 +86,60 @@ class OrderBook {
         break;
       }
     };
-    // do stuff;
-
-
     // @@ TODO, Sync orderbook with other peers
     return;
   }
 
-  matchOrders(order){
-
+  _matchOrders(order){
     console.log('MATCH ORDERS: ', order);
+    const { type } = order;
 
-    const oppositeOrderType = getOrderTypeToMatch(order.type);
-
-    console.log('ORDER TO MATCH', oppositeOrderType);
+    let orderData = { ...order };
+    const oppositeOrderType = getOrderTypeToMatch(type);
     const toMatchOrders = this.orders[oppositeOrderType];
 
     console.log('OPPOSITE ORDERS', toMatchOrders);
 
+    let matchingOrders = new Array();
 
-    // Lock ??? 
+    // Takes the current order and tries to match it with equal order prices
+    for (let i = 0; i < toMatchOrders.length; i ++) {
+      const oppositeOrder = toMatchOrders[i];
 
+      // WE found a matching order price, so we take the min quantity offered
+      // ie: we make a trade 
+      if (orderData.price === oppositeOrder.price) {
 
+        console.log('EQUAL ORDERS', orderData, oppositeOrder);
 
-    // @@TODO;
-    return null;
+        const tradeQuantity = Math.min(orderData.amount, oppositeOrder.amount);
+        const tradePrice = oppositeOrder.price;
+
+        orderData.amount -= tradeQuantity;
+        oppositeOrder.amount -= tradeQuantity;
+
+        if (oppositeOrder.amount === 0) {
+            toMatchOrders.splice(i, 1);
+            i -= 1;
+        }
+
+        matchingOrders.push({
+            type,
+            pkId: orderData.id,
+            skId: oppositeOrder.id,
+            quantity: tradeQuantity,
+            price: tradePrice,
+        });
+
+        // Order is fulfilled, we remove it from array too
+        if (orderData.amount === 0) {
+            // Remove fulfilled order from array;
+            const [ _fullfilledOrder ] = this.orders[type].splice(i, 1);
+            i -= 1;
+            break;
+        }
+      }
+    }
   };
 
   getOrder(order) {

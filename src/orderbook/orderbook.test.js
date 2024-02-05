@@ -20,7 +20,7 @@ describe('OrderBook', () => {
     };
 
     try {
-      ob.addOrder(mockOrder)
+      ob._addOrder(mockOrder)
     } catch(err) {
       expect(err.message).toBe(OrderErrors.unknownOrderErrorMesage);
     }
@@ -34,7 +34,7 @@ describe('OrderBook', () => {
     };
 
     try {
-      ob.addOrder(mockOrder)
+      ob._addOrder(mockOrder)
     } catch(err) {
       expect(err.message).toBe(OrderErrors.negativeAmountPriceErrorMessage);
     }
@@ -50,7 +50,7 @@ describe('OrderBook', () => {
     };
 
     try {
-      ob.addOrder(mockOrder)
+      ob._addOrder(mockOrder)
     } catch(err) {
       expect(err.message).toBe(OrderErrors.negativeAmountPriceErrorMessage);
     }
@@ -62,7 +62,7 @@ describe('OrderBook', () => {
       amount: 1,
       price: 1,
     };
-    ob.addOrder(mockOrder)
+    ob._addOrder(mockOrder)
 
     expect(ob.asset).toBe('usdt');
     expect(ob._getBuyOrders().length).toBe(1);
@@ -74,29 +74,40 @@ describe('OrderBook', () => {
       amount: 2,
       price: 2,
     };
-    ob.addOrder(mockOrder)
+    ob._addOrder(mockOrder)
 
     expect(ob.asset).toBe('usdt');
     expect(ob._getSellOrders().length).toBe(1);
   });
 
   it('Should match both orders and remove from arrays', () => {
+
+    // Prepare ob state
     let sellOrder = {
       type: 'SELL',
       amount: 2,
       price: 2,
     };
 
-    let buyOrder = {
+    ob._addOrder(sellOrder);
+    expect(ob._getSellOrders().length).toBe(1);
+    console.log('ob state: ', ob);
+    
+    mockOrder = {
+      id: 'mockId',
       type: 'BUY',
       amount: 2,
       price: 2,
     };
 
-    ob.addOrder(sellOrder);
-    ob.addOrder(buyOrder);
+    ob._addOrder(mockOrder);
+    ob._matchOrders(mockOrder);
 
-    ob.matchOrders();
+    console.log('ob state post: ', ob);
+
+    expect(ob._getBuyOrders().length).toBe(0);
+    expect(ob._getSellOrders().length).toBe(0);
+
   });
 
   });
