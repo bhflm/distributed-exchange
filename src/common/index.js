@@ -1,6 +1,4 @@
-
-// Define request object like 
-export function createEnum(values) {
+function createEnum(values) {
   const enumObject = {};
   for (const val of values) {
     enumObject[val] = val;
@@ -9,14 +7,6 @@ export function createEnum(values) {
 };
 
 
-
-const requestConfig = {
-  type,
-  assetId,
-  amount // buy / sell 
-};
-
-
 module.exports = {
-
+  createEnum,
 };

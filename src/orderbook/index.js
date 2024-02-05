@@ -1,4 +1,4 @@
-import { createEnum } from "../common";
+const { createEnum } = require("../common");
 
 /**
  * Makes an enum of type
@@ -13,20 +13,20 @@ const OrderType = createEnum(['SELL', 'BUY']);
  * Order is meant for each instance of a new order
  */
 class Order { 
-  constructor(type, asset, amount) {
+  constructor(type, amount, price) {
     if (OrderType[type] === undefined) {
       throw new Error('Need a valid Order Type');
     };
 
-    if (amount <= 0) {
-      throw new Error('Amount needs to be positive');
+    if (amount <= 0 || price <= 0) {
+      throw new Error('Amount & Price needs to be positive');
     }
 
     this.id = Math.random(); // uid ?
 
 
     this.type = type; // this should be orderType
-    this.asset = asset;
+    this.price = price;
     this.amount = amount;
   };
 };
@@ -36,13 +36,41 @@ class Order {
  */
 class OrderBook {
   
-  constructor (){ 
-    this.orders = new Array();
+  constructor (asset){ 
+    this.asset = asset;
+    this.buyOrders = new Array();
+    this.sellOrders = new Array();
   }
 
-  addOrder(order) {
-    console.log('adding order: ', order);
-    this.orders.push(order);
+  getAsset() {
+    return this.asset;
+  }
+
+  _getBuyOrders() {
+    return this.buyOrders;
+  };
+
+  _getSellOrders() {
+    return this.sellOrders;
+  };
+
+  addOrder(orderData) {
+    console.log('adding order: ', orderData);
+    const { type, amount, price } = orderData;
+    const newOrder = new Order(type, amount, price);
+
+    switch(newOrder.type) {
+      case OrderType.SELL: {
+        this.sellOrders.push(newOrder)
+        break;
+      };
+      case OrderType.BUY: {
+        this.buyOrders.push(newOrder);
+        break;
+      }
+    };
+
+    console.log('Added Order');
     // do stuff;
     return;
   }
@@ -53,8 +81,6 @@ class OrderBook {
   };
 
   getOrder(order) {
-    // @@ TODO;
-
     return null;
   }
   
