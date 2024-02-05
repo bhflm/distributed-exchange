@@ -8,6 +8,8 @@ const { PeerRPCClient }  = require('grenache-nodejs-http')
 const Link = require('grenache-nodejs-link')
 const config = require('./config');
 const { Logger } = require('./src/logger');
+const { Lock } = require('./src/common');
+const { OrderBook } = require('./src/orderbook');
 
 const link = new Link({
   grape: 'http://127.0.0.1:30001'
@@ -18,6 +20,12 @@ const peer = new PeerRPCClient(link, {})
 peer.init()
 
 const logger = new Logger();
+const lock = new Lock();
+
+// Sample asset
+const asset = 'USDT';
+const localOrderBook = new OrderBook('usdt');
+
 
 function promisifyPeerRequest(peerId, data, config) {
   return new Promise((resolve, reject) => {
@@ -34,8 +42,6 @@ function promisifyPeerRequest(peerId, data, config) {
 };
 
 async function makeClientRequest(peerId, data, config) {
-  console.log('makeClientRequest');
-
   if (!config.timeOut) {
     config.timeOut = 10000;
   };
@@ -54,22 +60,26 @@ async function makeClientRequest(peerId, data, config) {
 
   try {
     logger.info({ key: 'clientRequest', data });
-
+    await lock.acquire();
     await promisifyPeerRequest(peerId, data, config);
   } 
   catch(err) {
     logger.error(err);
+  } finally {
+    await lock.release();
   };
 };
 
 
 // @@ TODO
 // manually testing this should be later refactored onto a script or cli alike exposure
-const addOrderRequest = {
-  type: 'ADD',
+const order = {
+  type: 'BUY',
   amount: 1,
   price: 1000
 };
+
+
 
 const peerConfig = {
   timeout: 10000,

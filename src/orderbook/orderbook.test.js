@@ -1,5 +1,5 @@
 const OrderErrors = require('./errors');
-const { OrderBook} = require('.');
+const { OrderBook } = require('.');
 
 describe('OrderBook', () => {
   
@@ -132,7 +132,6 @@ describe('OrderBook', () => {
     
   });
 
-
   it('Should match (two orders), one sell and a half a different order. Fulfilling the current and remaining a partial order on the ob state', () => {
     let sellOrderA = {
       type: 'SELL',
@@ -165,6 +164,43 @@ describe('OrderBook', () => {
     expect(ob._getBuyOrders().length).toBe(0);
     expect(ob._getSellOrders().length).toBe(1);
     expect(ob._getFullfilledOrders().length).toBe(2);
+  });
+
+  it('Should manually lock ob and unlock after', async () => {
+    let sellOrderA = {
+      type: 'SELL',
+      amount: 1,
+      price: 1,
+    };
+
+    await ob.lock.acquire();
+
+    console.log('OB: ', ob);
+
+    expect(ob.lock.isLocked).toBe(true);
+
+    ob._addOrder(sellOrderA);
+
+    await ob.lock.release();
+
+    expect(ob._getSellOrders().length).toBe(1);
+
+    expect(ob.lock.isLocked).toBe(false);
+  });
+
+
+  it('Should do a submitOrder with lock released', async () => {
+    let sellOrderA = {
+      type: 'SELL',
+      amount: 1,
+      price: 1,
+    };
+
+    await ob.submitNewOrder(sellOrderA);
+
+    expect(ob._getSellOrders().length).toBe(1);
+
+    expect(ob.lock.isLocked).toBe(false);
   });
 
   });

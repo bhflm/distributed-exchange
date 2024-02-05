@@ -32,17 +32,15 @@ service.listen(port)
 console.log('started service');
 
 const logger = new Logger();
-const orderBook = new OrderBook();
+const instanceOrderBook = new OrderBook();
 
-setInterval(function () {
-  link.announce(config._workerName, service.port, {})
-}, 1000)
-
-
-
+setInterval(() => {
+  // Announce service and synchronize order books with connected clients
+  link.announce(config._workerName, service.port, {});
+  syncOrderBooks();
+}, 1000);
 
 async function handleRequest({ key, payload, handler }) {
-  
   logger.info({key: 'handleRequest', payload});
   
   // debug things
@@ -56,3 +54,11 @@ async function handleRequest({ key, payload, handler }) {
 service.on('request', async (rid, key, payload, handler) => {
   await handleRequest({ key, payload, handler });
 })
+
+function syncOrderBooks() {
+  // Retrieve the global order book from the server
+  const globalOrderBook = instanceOrderBook.getOrderBook();
+
+  // Iterate through connected clients and synchronize their local order books
+  link.announce('rpc_test', service.port, { orderBook: globalOrderBook });
+}

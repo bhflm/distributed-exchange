@@ -1,5 +1,6 @@
 const errorMessages = require('./errors');
 const { createEnum } = require("../common");
+const { Lock } = require('../common/lock');
 
 /**
  * Makes an enum of type
@@ -9,7 +10,6 @@ const { createEnum } = require("../common");
  * }
  */
 const OrderType = createEnum(['SELL', 'BUY']);
-
 
 // Returns against order type to match for
 const getOrderTypeToMatch = (orderType) => {
@@ -53,7 +53,8 @@ class OrderBook {
       [OrderType.BUY]: new Array(),
       [OrderType.SELL]: new Array(),
     }
-    this.fullfilledOrders = new Array(); // @@ TODO, Do we need to keep record of fulfilled orders ?;
+    this.fullfilledOrders = new Array();
+    this.lock = new Lock(); // @@ TODO, Do we need to keep record of fulfilled orders ?;
   }
 
   getAsset() {
@@ -72,9 +73,8 @@ class OrderBook {
     return this.fullfilledOrders;
   };
 
-  _addOrder(orderData) {
-    const { type, amount, price } = orderData;
-    const newOrder = new Order(type, amount, price);
+  _addOrder(newOrder) {
+    const { type, amount, price } = newOrder;
 
     switch(newOrder.type) {
       case OrderType.SELL: {
@@ -90,7 +90,6 @@ class OrderBook {
         break;
       }
     };
-    // @@ TODO, Sync orderbook with other peers
     return;
   }
 
@@ -104,11 +103,7 @@ class OrderBook {
 
     // Takes the current order and tries to match it with equal order prices
     for (let i = 0; i < toMatchOrders.length; i ++) {
-
-
       const oppositeOrder = toMatchOrders[i];
-
-
       // WE found a matching order price (equal or lower), so we take the min quantity offered
       // ie: we make a trade 
 
@@ -137,16 +132,53 @@ class OrderBook {
             this.fullfilledOrders.push(_fullfilledOrder);
             i -= 1;
             break;
-        }
+        } else {
+          // Update order array with modified matched order;
+          this.orders[type][i] = currentOrder;
+        };
       }
 
     }
 
-
-
+    // public
 
   };
+
+  async submitNewOrder({ type, amount, price }){
+    // Lock Ob;
+    try {
+      if (this.lock.isLocked) {
+        throw new Error(errors.resourceUnavailable);
+      }
+
+      await this.lock.acquire();
+
+      const newOrder = new Order(type, amount, price);
+      
+      this._addOrder(newOrder);
+      this._matchOrders(newOrder);
   
+    } catch(err) {
+      console.error('Error processing order:', err);
+    } finally {
+      await this.lock.release();
+    }
+
+  };
+
+
+  async syncOrderBook(globalOrderbook) {
+    await this.lock.acquire();
+
+    const updatedOrders = globalOrderbook.orders;
+    this.orders = updatedOrders;
+
+    const updatedFulfilled = globalOrderbook.fullfilledOrders;
+    this.fullfilledOrders = updatedFulfilled;
+
+    await this.lock.release();
+  };
+
 };
 
 module.exports = {
